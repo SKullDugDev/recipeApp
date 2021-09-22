@@ -13,7 +13,7 @@ namespace recipeConsole
     {
 
 
-        static async Task Main(string[] args)
+        static async Task Main()
         {
 
             // load the app settings into configuration
