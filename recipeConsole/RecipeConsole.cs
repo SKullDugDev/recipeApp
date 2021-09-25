@@ -11,60 +11,33 @@ namespace recipeConsole
 {
     class RecipeConsole
     {
-
-
         static async Task Main()
         {
+            // run the configuration setup and store the results in the configurationResults object
+            var configurationResults = Helpers.ConfigurationSetup();
 
-            // load the app settings into configuration
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", false, true)
-                .AddUserSecrets<RecipeConsole>()
-                .Build();
+            // from the configurationResults object, get the service provider
+            var serviceProvider = configurationResults.ServiceProvider;
 
-            // parse all settings into the settings class structure
-            var settings = configuration.Get<ConfigurationSettings>();
-
-
-            // setup logging
-            var services = new ServiceCollection() as IServiceCollection;
-
-            services.AddLogging(configure =>
-            {
-                configure.AddConfiguration(configuration.GetSection("Logging"));
-                configure.AddConsole();
-            });
-
-            var serviceProvider = services.BuildServiceProvider();
-
-            // log settings that were parsed
+            // from the services, get the service ILogger for RecipeConsole
             var logger = serviceProvider.GetRequiredService<ILogger<RecipeConsole>>();
 
-            // Main bit of code
+            // using the settings, get the arguments for the MongoDB Processa          
+            var mongoArgs = Helpers.GetMongoArgs(configurationResults.Settings);
 
-            // set mongodb connection variables
+            Console.WriteLine("Beginning communication with MongoDB...");
 
-            string mongoDBHost = settings.AppSettings.MongoDBInfo.host;
-            int mondoDBPort = settings.AppSettings.MongoDBInfo.port;
-            string mongoDBPass = Uri.EscapeDataString(settings.AppSettings.MongoDBInfo.mongodbpass);
-
-            Console.WriteLine("Beginning process...");
             try
             {
-                await MongoDBProcess.Connect(mongoDBHost, mondoDBPort, mongoDBPass);
+                await MongoDBProcess.IngredientBuilder(mongoArgs);
             }
             catch (Exception e)
             {
                 logger.LogDebug("Error produced during processing of data: {e}", e);
             }
 
-
             // dispose the serviceProvider; this will ensure all logs get flushed
             serviceProvider.Dispose();
-
         }
-
-
-
     }
 }
