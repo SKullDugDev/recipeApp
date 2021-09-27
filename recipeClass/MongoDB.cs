@@ -54,6 +54,8 @@ namespace recipeClass
             {
                 public FilterDefinition<Recipe> Filter { get; set; }
                 public SortDefinition<Recipe> Sort { get; set; }
+
+                public FindOptions<Objects.Recipe> Options { get; set; }
             }
 
             public class Ingredient
@@ -124,6 +126,11 @@ namespace recipeClass
                 // implement a sort definition builder for the recipe entity class
                 var sortBuilder = Builders<Objects.Recipe>.Sort;
 
+                var optionBuilder = new FindOptions<Objects.Recipe>()
+                {
+                    BatchSize = 101
+                };
+
                 // initiate a new instance of the recipe defintion builder class
                 var recipeDefinitionBuilder = new Objects.RecipeDefinitionBuilder
                 {
@@ -134,7 +141,10 @@ namespace recipeClass
 
                     // create a sort definiton logic to sort by RecipeID in ascending order
                     // store it in the Sort property of the recipe defintion builder
-                    Sort = sortBuilder.Ascending("RecipeID")
+                    Sort = sortBuilder.Ascending("RecipeID"),
+
+                    Options = optionBuilder
+
                 };
 
                 // return the recipe definition builder
@@ -187,7 +197,7 @@ namespace recipeClass
             }
 
 
-            public static async Task ProcessRecipesFromCursor(IAsyncCursor<Objects.Recipe> cursor, bool cursorEmpty, HttpClient httpClient, int recipeCount, List<Objects.Ingredient> ingredients)
+            public static async Task ProcessRecipesFromCursor(IAsyncCursor<Objects.Recipe> cursor, bool cursorEmpty, IHttpClientFactory httpClientFactory, int recipeCount, List<Objects.Ingredient> ingredients)
             {
 
                 Console.WriteLine("Checking recipes for ingredients...");
@@ -198,7 +208,7 @@ namespace recipeClass
                 // for each recipe of type Entities.Recipe in the recipes list
                 foreach (Objects.Recipe recipe in recipes)
                 {
-                    var siteResponse = await WebClient.GetSiteResponse(recipe.Link, httpClient);
+                    var siteResponse = await WebClient.GetSiteResponse(recipe.Link, httpClientFactory);
 
                     if (siteResponse.IsSuccessStatusCode == true)
                     {
@@ -229,7 +239,7 @@ namespace recipeClass
             }
 
 
-            public static async Task GetIngredientsFromCursor(IAsyncCursor<Objects.Recipe> cursor, HttpClient httpClient, int recipeCount, List<Objects.Ingredient> ingredients)
+            public static async Task GetIngredientsFromCursor(IAsyncCursor<Objects.Recipe> cursor, IHttpClientFactory httpClientFactory, int recipeCount, List<Objects.Ingredient> ingredients)
             {
 
                 // when ToCursorAsync is used, the cursor originally has no content
@@ -247,7 +257,7 @@ namespace recipeClass
 
                 while (!cursorEmpty)
                 {
-                    await ProcessRecipesFromCursor(cursor, cursorEmpty, httpClient, recipeCount, ingredients);
+                    await ProcessRecipesFromCursor(cursor, cursorEmpty, httpClientFactory, recipeCount, ingredients);
 
                 }
 
@@ -320,7 +330,6 @@ namespace recipeClass
 
                 // create the httpClient we will be using in processing the documents
 
-                var httpClient = configurationResults.HttpClientFactory.CreateClient();
 
                 Console.WriteLine("Initial sorting through collection in progress...");
 
@@ -330,8 +339,8 @@ namespace recipeClass
 
                 using (IAsyncCursor<Objects.Recipe> cursor = await recipeCollection.Find(recipeDefinitionBuilder.Filter).Sort(recipeDefinitionBuilder.Sort).ToCursorAsync())
                 {
-         
-                    await GetIngredientsFromCursor(cursor, httpClient, recipeCount, ingredients);
+
+                    await GetIngredientsFromCursor(cursor, configurationResults.HttpClientFactory, recipeCount, ingredients);
 
                 }
 
@@ -516,8 +525,10 @@ namespace recipeClass
     public class WebClient
     {
         // use this to get the site response 
-        public static async Task<HttpResponseMessage> GetSiteResponse(string recipeLink, HttpClient httpClient)
+        public static async Task<HttpResponseMessage> GetSiteResponse(string recipeLink, IHttpClientFactory httpClientFactory)
         {
+
+            var httpClient = httpClientFactory.CreateClient();
 
             // if the link doesn't include the http:// scheme already
             if (recipeLink.Contains("http:") == false)
