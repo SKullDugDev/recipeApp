@@ -55,7 +55,7 @@ namespace recipeClass
                 public FilterDefinition<Recipe> Filter { get; set; }
                 public SortDefinition<Recipe> Sort { get; set; }
 
-                public FindOptions<Objects.Recipe> Options { get; set; }
+                public FindOptions Options { get; set; }
             }
 
             public class Ingredient
@@ -126,7 +126,7 @@ namespace recipeClass
                 // implement a sort definition builder for the recipe entity class
                 var sortBuilder = Builders<Objects.Recipe>.Sort;
 
-                var optionBuilder = new FindOptions<Objects.Recipe>()
+                var optionBuilder = new FindOptions()
                 {
                     BatchSize = 101
                 };
@@ -197,10 +197,10 @@ namespace recipeClass
             }
 
 
-            public static async Task ProcessRecipesFromCursor(IAsyncCursor<Objects.Recipe> cursor, bool cursorEmpty, IHttpClientFactory httpClientFactory, int recipeCount, List<Objects.Ingredient> ingredients)
+            public static async Task<int> ProcessRecipesFromCursor(IAsyncCursor<Objects.Recipe> cursor, bool cursorEmpty, IHttpClientFactory httpClientFactory, List<Objects.Ingredient> ingredients)
             {
-
-                Console.WriteLine("Checking recipes for ingredients...");
+                // we need to keep track of how many recipes are processed each time this runs, not in total
+                var recipeCount = 0;
 
                 // get the current documents in the cursor and place it in an IEnumberal of type Entities.Recipe named recipes
                 IEnumerable<Objects.Recipe> recipes = cursor.Current;
@@ -224,6 +224,7 @@ namespace recipeClass
 
                         }
 
+                        // increase the count of recipes processed
                         recipeCount++;
                     }
                 }
@@ -236,11 +237,15 @@ namespace recipeClass
                 // if there is more, then cursor empty will be false and the loop continues
                 // if there is no more, then cursor empty will be true and the loop ends
                 cursorEmpty = !await cursor.MoveNextAsync();
+                return recipeCount;
             }
 
 
-            public static async Task GetIngredientsFromCursor(IAsyncCursor<Objects.Recipe> cursor, IHttpClientFactory httpClientFactory, int recipeCount, List<Objects.Ingredient> ingredients)
+            public static async Task<int> GetIngredientsFromCursor(IAsyncCursor<Objects.Recipe> cursor, IHttpClientFactory httpClientFactory, List<Objects.Ingredient> ingredients)
             {
+
+                // start off with no recipes processed
+                var recipesProcessedCount = 0;
 
                 // when ToCursorAsync is used, the cursor originally has no content
                 // MoveNextAsync()/something similar needs to be called to get the first batch of docs
@@ -255,9 +260,11 @@ namespace recipeClass
                 // while it is true that the cursor is not empty, run
                 // can also be read as: while (not cursorEmpty) evaluates as true, run
 
+                Console.WriteLine("Checking recipes for ingredients...");
                 while (!cursorEmpty)
                 {
-                    await ProcessRecipesFromCursor(cursor, cursorEmpty, httpClientFactory, recipeCount, ingredients);
+                    recipesProcessedCount += await ProcessRecipesFromCursor(cursor, cursorEmpty, httpClientFactory, ingredients);
+                    Console.WriteLine("{0} recipes processed thus far...", recipesProcessedCount);
 
                 }
 
@@ -271,6 +278,7 @@ namespace recipeClass
                     throw new ArgumentException(exceptionMessage);
                 }
 
+                return recipesProcessedCount;
             }
 
             public static void ParseIngredients(List<string> ingredientStrings, List<Objects.Ingredient> ingredients)
@@ -326,10 +334,7 @@ namespace recipeClass
                 Console.WriteLine("Sorting and filtering logic determined...");
 
                 // start off recipe count as 0
-                int recipeCount = 0;
-
-                // create the httpClient we will be using in processing the documents
-
+                int totalRecipeCount = 0;
 
                 Console.WriteLine("Initial sorting through collection in progress...");
 
@@ -340,9 +345,11 @@ namespace recipeClass
                 using (IAsyncCursor<Objects.Recipe> cursor = await recipeCollection.Find(recipeDefinitionBuilder.Filter).Sort(recipeDefinitionBuilder.Sort).ToCursorAsync())
                 {
 
-                    await GetIngredientsFromCursor(cursor, configurationResults.HttpClientFactory, recipeCount, ingredients);
+                    totalRecipeCount = await GetIngredientsFromCursor(cursor, configurationResults.HttpClientFactory, ingredients);
 
                 }
+
+                Console.WriteLine("{0} recipes processed in total...", totalRecipeCount);
 
                 Console.WriteLine("Parsing through ingredients...");
                 ParseIngredients(ingredientStrings, ingredients);
@@ -352,8 +359,8 @@ namespace recipeClass
                 // take all the ingredient json objects in the ingredient json list and combine them into one json string containing all ingredients
                 string ingredientsJSON = String.Join(",", ingredientStrings);
 
-                Console.WriteLine(ingredientsJSON);
-
+                Console.WriteLine(ingredientsJSON);                
+                Console.WriteLine("Breakpoint");
                 return;
 
             }
@@ -540,13 +547,14 @@ namespace recipeClass
                 try
                 {
                     // make a header request and return the response
-                    return await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Head, recipeURI.ToString()));
-
+                    var response = await httpClient.GetAsync(recipeURI.ToString(), HttpCompletionOption.ResponseHeadersRead);
+                    return response;
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Header Request refused...attempting a normal Get request...error as follows: {0}", e);
-                    return await httpClient.GetAsync(recipeURI);
+                    Console.WriteLine("Header Request refused...attempting a normal Get request for {0}...error as follows: {1}", recipeURI, e);
+                    var response = await httpClient.GetAsync(recipeURI);
+                    return response;
                 }
 
             }
@@ -555,12 +563,14 @@ namespace recipeClass
             try
             {
                 // send a header request
-                return await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Head, recipeLink));
+                var response = await httpClient.GetAsync(recipeLink, HttpCompletionOption.ResponseContentRead);
+                return response;
             }
             catch (Exception e)
             {
-                Console.WriteLine("Header Request refused...attempting a normal Get request...error as follows: {0}", e);
-                return await httpClient.GetAsync(recipeLink);
+                Console.WriteLine("Header Request refused...attempting a normal Get request for {0}...error as follows: {1}", recipeLink, e);
+                var response =await httpClient.GetAsync(recipeLink);
+                return response;
             }
 
         }
