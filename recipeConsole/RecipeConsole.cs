@@ -1,8 +1,8 @@
 ﻿using System;
-using recipeClass;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using RecipeLibrary;
 
 namespace recipeConsole
 {
@@ -11,7 +11,7 @@ namespace recipeConsole
         static async Task Main()
         {
             // run the configuration setup and store the results in the configurationResults object
-            var configurationResults = Configuration.Methods.ConfigurationSetup();
+            var configurationResults = RecipeLibrary.Configuration.ConfigResults.ConfigurationSetup();
 
             Console.WriteLine("Configuration Setup successful, results retrieved...");
 
@@ -26,7 +26,7 @@ namespace recipeConsole
             try
             {
                 // send config results to builder
-                await recipeClass.MongoDB.Methods.IngredientBuilder(configurationResults);
+                await RecipeLibrary.Ingredients.MongoDB.MongoIngredient.IngredientBuilder(configurationResults);
             }
             catch (Exception e)
             {
