@@ -9,5 +9,8 @@ namespace RecipeLibrary.Ingredients
         public int IngredientID { get; set; }
 
         public string NamedEntity { get; set; }
+
     }
+
+
 }

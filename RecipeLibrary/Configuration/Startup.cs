@@ -1,11 +1,11 @@
-﻿using System.Net.Http;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using System.Net.Http;
 
 namespace RecipeLibrary.Configuration
 {
-    public class ConfigResults
+    public class Startup
     {
         public ServiceProvider ServiceProvider { get; set; }
 
@@ -13,14 +13,14 @@ namespace RecipeLibrary.Configuration
 
         public IHttpClientFactory HttpClientFactory { get; set; }
 
-        public static ConfigResults ConfigurationSetup()
+        public static Startup ConfigurationSetup()
         {
             // intiate a new configuration builder to create our configurations
             var configuration = new ConfigurationBuilder()
                 // add json file, appsettings.json; mark as not optional; reload on change
                 .AddJsonFile("appsettings.json", false, true)
                 // add user secrets to the mongodb file
-                .AddUserSecrets<Recipes.MongoDB.MongoRecipe>()
+                .AddUserSecrets<Recipes.MongoDB.IMongoRecipe>()
                 // build our configurations
                 .Build();
 
@@ -44,7 +44,7 @@ namespace RecipeLibrary.Configuration
             var serviceProvider = services.BuildServiceProvider();
 
             // create a new instance of the ConfigurationResults object/class
-            var configurationResults = new ConfigResults
+            var Startup = new Startup
             {
 
                 // store the service provider in configurationResults
@@ -58,7 +58,7 @@ namespace RecipeLibrary.Configuration
             };
 
             // return the configurationResults object
-            return configurationResults;
+            return Startup;
         }
 
     }

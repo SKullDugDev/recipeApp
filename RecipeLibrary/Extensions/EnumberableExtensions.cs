@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 
+
 namespace RecipeLibrary.Extensions
 {
-    public static class DistinctByExtension
+    public static class EnumberableExtensions
     {
 
         /// <summary>
@@ -27,16 +28,15 @@ namespace RecipeLibrary.Extensions
         /// <returns> IEnumberal<typeparamref name="TSource"/>; an IEnumberal of a general type TSource </returns>
 
         public static IEnumerable<TSource> DistinctBy<TSource, TKey>
-
         (this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
         {
-            
+
             HashSet<TKey> seenKeys = new();
-            
+
             foreach (TSource element in source)
-           
+
             {
-                
+
                 if (seenKeys.Add(keySelector(element)))
                 {
 
@@ -44,5 +44,6 @@ namespace RecipeLibrary.Extensions
                 }
             }
         }
+
     }
 }

@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace recipeApp.Data
+namespace RecipeApp.Data
 {
     public class ApplicationDbContext : IdentityDbContext
     {

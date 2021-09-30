@@ -2,21 +2,23 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
-using RecipeLibrary;
+using RecipeLibrary.Configuration;
+using RecipeLibrary.MongoDB;
+using RecipeLibrary.Ingredients.MongoDB;
 
-namespace recipeConsole
+namespace RecipeConsole
 {
     class RecipeConsole
     {
         static async Task Main()
         {
             // run the configuration setup and store the results in the configurationResults object
-            var configurationResults = RecipeLibrary.Configuration.ConfigResults.ConfigurationSetup();
+            var startupResults = Startup.ConfigurationSetup();
 
             Console.WriteLine("Configuration Setup successful, results retrieved...");
 
             // from the configurationResults object, get the service provider
-            var serviceProvider = configurationResults.ServiceProvider;
+            var serviceProvider = startupResults.ServiceProvider;
 
             // from the services, get the service ILogger for and use it on the console
             var logger = serviceProvider.GetRequiredService<ILogger<RecipeConsole>>();            
@@ -26,7 +28,9 @@ namespace recipeConsole
             try
             {
                 // send config results to builder
-                await RecipeLibrary.Ingredients.MongoDB.MongoIngredient.IngredientBuilder(configurationResults);
+                string connectionString = startupResults.Settings.GetMongoConnectionString();
+
+                string ingredientsJSON = await MongoIngredient.MakeIngredientJSONFromRecipes(connectionString);
             }
             catch (Exception e)
             {

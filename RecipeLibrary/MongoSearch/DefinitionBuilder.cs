@@ -5,20 +5,20 @@ namespace RecipeLibrary.MongoSearch
 {
     public class DefinitionBuilder
     {
-        public FilterDefinition<MongoRecipe> Filter { get; set; }
-        public SortDefinition<MongoRecipe> Sort { get; set; }
+        public FilterDefinition<IMongoRecipe> Filter { get; set; }
+        public SortDefinition<IMongoRecipe> Sort { get; set; }
         public FindOptions Options { get; set; }
         public static DefinitionBuilder GetMongoSearchLogic()
         {
             // implement a filter definition builder for the MongoRecipe entity class 
-            var filterBuilder = Builders<MongoRecipe>.Filter;
+            var filterBuilder = Builders<IMongoRecipe>.Filter;
 
             // implement a sort definition builder for the MongoRecipe entity class
-            var sortBuilder = Builders<MongoRecipe>.Sort;
+            var sortBuilder = Builders<IMongoRecipe>.Sort;
 
             var optionBuilder = new FindOptions()
             {
-                BatchSize = 101
+                BatchSize = 501
             };
 
             // initiate a new instance of the MongoRecipe defintion builder class
