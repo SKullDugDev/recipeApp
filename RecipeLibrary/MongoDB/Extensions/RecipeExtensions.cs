@@ -6,9 +6,10 @@ using RecipeLibrary.NER;
 using System.Threading.Tasks;
 using RecipeLibrary.Extensions;
 using System.Collections.Generic;
-using RecipeLibrary.Ingredients.MongoDB;
+using RecipeLibrary.MongoDB.Recipes;
+using RecipeLibrary.MongoDB.Ingredients;
 
-namespace RecipeLibrary.Recipes.MongoDB
+namespace RecipeLibrary.MongoDB.Extensions
 {
     public static class RecipeExtensions
     {

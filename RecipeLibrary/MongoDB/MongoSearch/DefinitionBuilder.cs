@@ -1,7 +1,7 @@
 ﻿using MongoDB.Driver;
-using RecipeLibrary.Recipes.MongoDB;
+using RecipeLibrary.MongoDB.Recipes;
 
-namespace RecipeLibrary.MongoSearch
+namespace RecipeLibrary.MongoDB.MongoSearch
 {
     public class DefinitionBuilder
     {

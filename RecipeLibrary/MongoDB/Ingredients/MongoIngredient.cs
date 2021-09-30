@@ -1,12 +1,14 @@
 ﻿using System;
 using MongoDB.Driver;
 using System.Threading.Tasks;
-using RecipeLibrary.MongoSearch;
+using RecipeLibrary.Ingredients;
 using System.Collections.Generic;
-using RecipeLibrary.Recipes.MongoDB;
+using RecipeLibrary.MongoDB.Recipes;
+using RecipeLibrary.MongoDB.Extensions;
+using RecipeLibrary.MongoDB.MongoSearch;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace RecipeLibrary.Ingredients.MongoDB
+namespace RecipeLibrary.MongoDB.Ingredients
 {
     public class MongoIngredient : IIngredient
     {

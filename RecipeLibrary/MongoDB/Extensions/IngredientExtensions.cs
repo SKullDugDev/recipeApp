@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Text.Json;
 using System.Collections.Generic;
+using RecipeLibrary.MongoDB.Ingredients;
 
-namespace RecipeLibrary.Ingredients.MongoDB
+namespace RecipeLibrary.MongoDB.Extensions
 {
     static class IngredientExtensions
     {

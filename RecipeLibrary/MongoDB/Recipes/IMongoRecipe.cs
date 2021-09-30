@@ -1,8 +1,9 @@
 ﻿
 using MongoDB.Bson;
+using RecipeLibrary.Recipes;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace RecipeLibrary.Recipes.MongoDB
+namespace RecipeLibrary.MongoDB.Recipes
 {
     public class IMongoRecipe : IRecipe
     {

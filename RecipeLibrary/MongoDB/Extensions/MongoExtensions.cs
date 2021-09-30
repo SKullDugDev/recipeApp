@@ -1,11 +1,7 @@
-﻿using RecipeLibrary.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
+using RecipeLibrary.Configuration;
 
-namespace RecipeLibrary.MongoDB
+namespace RecipeLibrary.MongoDB.Extensions
 {
     public static class MongoExtensions
     {

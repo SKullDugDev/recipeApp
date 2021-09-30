@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
 using RecipeLibrary.Configuration;
-using RecipeLibrary.MongoDB;
-using RecipeLibrary.Ingredients.MongoDB;
+using RecipeLibrary.MongoDB.Extensions;
+using RecipeLibrary.MongoDB.Ingredients;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace RecipeConsole
 {
@@ -31,6 +31,7 @@ namespace RecipeConsole
                 string connectionString = startupResults.Settings.GetMongoConnectionString();
 
                 string ingredientsJSON = await MongoIngredient.MakeIngredientJSONFromRecipes(connectionString);
+
             }
             catch (Exception e)
             {
