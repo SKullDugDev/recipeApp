@@ -12,16 +12,19 @@ namespace RecipeConsole
     {
         static async Task Main()
         {
+            // check execution time with a stopwatch
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+
             // run the configuration setup and store the results in the configurationResults object
-            var startupResults = Startup.ConfigurationSetup();
+            var startupResults = Startup.SetupConfiguration();
 
             Console.WriteLine("Configuration Setup successful, results retrieved...");
 
             // from the configurationResults object, get the service provider
-            var serviceProvider = startupResults.ServiceProvider;
+            using var serviceProvider = startupResults.ServiceProvider;
 
             // from the services, get the service ILogger for and use it on the console
-            var logger = serviceProvider.GetRequiredService<ILogger<RecipeConsole>>();            
+            var logger = serviceProvider.GetRequiredService<ILogger<RecipeConsole>>();
 
             Console.WriteLine("Starting up the Ingredient Builder...");
 
@@ -30,16 +33,19 @@ namespace RecipeConsole
                 // send config results to builder
                 string connectionString = startupResults.Settings.GetMongoConnectionString();
 
-                string ingredientsJSON = await MongoIngredient.MakeIngredientJSONFromRecipes(connectionString);
+                await IMongoIngredient.MakeIngredientJSONFromRecipes(connectionString);
 
             }
             catch (Exception e)
             {
-                logger.LogDebug("Error produced during processing of data: {e}", e);
+                logger.LogError("Error produced during processing of data: {e}", e);
+
             }
 
-            // dispose the serviceProvider; this will ensure all logs get flushed
-            serviceProvider.Dispose();
+            watch.Stop();
+            Console.WriteLine($"Total execution time was {watch.ElapsedMilliseconds}ms");
+
+
         }
     }
 }

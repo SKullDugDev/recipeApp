@@ -18,7 +18,8 @@ namespace RecipeLibrary.MongoDB.MongoSearch
 
             var optionBuilder = new FindOptions()
             {
-                BatchSize = 501
+                //BatchSize = 501,
+                NoCursorTimeout = true
             };
 
             // initiate a new instance of the MongoRecipe defintion builder class
@@ -41,6 +42,7 @@ namespace RecipeLibrary.MongoDB.MongoSearch
             return mongoSearchLogic;
 
         }
+        
 
     }
 

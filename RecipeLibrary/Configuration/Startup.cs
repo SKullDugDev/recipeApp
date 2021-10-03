@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using RecipeLibrary.MongoDB.Ingredients;
 using System.Net.Http;
 
 namespace RecipeLibrary.Configuration
@@ -13,14 +14,14 @@ namespace RecipeLibrary.Configuration
 
         public IHttpClientFactory HttpClientFactory { get; set; }
 
-        public static Startup ConfigurationSetup()
+        public static Startup SetupConfiguration()
         {
             // intiate a new configuration builder to create our configurations
             var configuration = new ConfigurationBuilder()
                 // add json file, appsettings.json; mark as not optional; reload on change
                 .AddJsonFile("appsettings.json", false, true)
                 // add user secrets to the mongodb file
-                .AddUserSecrets<Recipes.MongoDB.IMongoRecipe>()
+                .AddUserSecrets<IMongoIngredient>()
                 // build our configurations
                 .Build();
 
