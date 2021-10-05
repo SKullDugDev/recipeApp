@@ -4,7 +4,7 @@ namespace RecipeLibrary.Recipes
     public interface IRecipe
     {
 
-        public int RecipeID { get; set; }
+        public int RecipeId { get; set; }
 
         public string Title { get; set; }
 

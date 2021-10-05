@@ -36,7 +36,7 @@ namespace RecipeLibrary.MongoDB.Extensions
             // first use a builder to start up the index key logic; then make an indexModel to hold the
             var documentIndexBuilder = Builders<TDocument>.IndexKeys;
 
-            // then create an index model to establish the index logic: index using RecipeID in an ascending order
+            // then create an index model to establish the index logic: index using RecipeId in an ascending order
             var indexModel = new CreateIndexModel<TDocument>(documentIndexBuilder.Ascending(indexFieldName));
 
             // finally add the index to the collection and the name of the index
@@ -55,7 +55,7 @@ namespace RecipeLibrary.MongoDB.Extensions
                 Unique = true
             };
 
-            // then create an index model to establish the index logic: index using RecipeID in an ascending order
+            // then create an index model to establish the index logic: index using RecipeId in an ascending order
             var indexModel = new CreateIndexModel<TDocument>(documentIndexBuilder.Ascending(indexFieldName), indexOptions);
 
             // finally add the index to the collection and the name of the index

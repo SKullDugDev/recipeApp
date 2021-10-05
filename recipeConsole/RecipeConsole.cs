@@ -43,7 +43,9 @@ namespace RecipeConsole
             }
 
             watch.Stop();
-            Console.WriteLine($"Total execution time was {watch.ElapsedMilliseconds}ms");
+            var elapsedTime = watch.ElapsedMilliseconds;
+            var timeInMinutes = TimeSpan.FromMilliseconds(elapsedTime).TotalMinutes;
+            Console.WriteLine($"Total execution time was {timeInMinutes} minutes, having ran for {watch.ElapsedMilliseconds}ms .");
 
 
         }

@@ -1,12 +1,13 @@
 ﻿
 namespace RecipeLibrary.Ingredients
 {
-    public interface IIngredient
+    public interface IIngredient<TIdentification>
     {
-        public int RecipeID { get; set; }
 
-        public int IngredientID { get; set; }
+        public TIdentification IngredientId { get; set; }
 
+        public int RecipeId { get; set; }
+        
         public string NamedEntity { get; set; }
 
     }

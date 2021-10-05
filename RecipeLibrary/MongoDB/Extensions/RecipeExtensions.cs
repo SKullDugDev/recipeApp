@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using RecipeLibrary.MongoDB.Recipes;
 using RecipeLibrary.MongoDB.Ingredients;
+using RecipeLibrary.MongoDB.Exceptions;
+using RecipeLibrary.MongoDB.MongoSearch;
 
 namespace RecipeLibrary.MongoDB.Extensions
 {
@@ -31,8 +33,8 @@ namespace RecipeLibrary.MongoDB.Extensions
         //    // first use a builder to start up the index key logic; then make an indexModel to hold the
         //    var recipeIndexBuilder = Builders<IMongoRecipe>.IndexKeys;
 
-        //    // then create an index model to establish the index logic: index using RecipeID in an ascending order
-        //    var indexModel = new CreateIndexModel<IMongoRecipe>(recipeIndexBuilder.Ascending(recipe => recipe.RecipeID));
+        //    // then create an index model to establish the index logic: index using RecipeId in an ascending order
+        //    var indexModel = new CreateIndexModel<IMongoRecipe>(recipeIndexBuilder.Ascending(recipe => recipe.RecipeId));
 
         //    // finally add the index to the collection and the name of the index
         //    return await recipeCollection.Indexes.CreateOneAsync(indexModel); ;
@@ -66,15 +68,10 @@ namespace RecipeLibrary.MongoDB.Extensions
                     IMongoIngredient ingredient = new()
                     {
 
-                        // no need to assign an object id in this case, the db will make one for us
-                        // assign the ingredient objectid to the objectid of the set
-                        //ObjectID = recipe.ObjectId.ToString(),
+                        // no need to assign an object/ingredient id in this case, the db will make one for us
 
                         // assign the ingredient recipeid to the recipeid of the set
-                        RecipeID = recipe.RecipeID,
-
-                        // assign the ingredient an id based on the ingredient count
-                        IngredientID = ingredientCount,
+                        RecipeId = recipe.RecipeId,
 
                         // assign the ingredient a named entity
                         NamedEntity = namedEntity
@@ -85,31 +82,53 @@ namespace RecipeLibrary.MongoDB.Extensions
                     // if it fails on a duplicate in the way we expect, add to the duplicate count
                     // if it fails in a way we don't expect, either throw it to the outer method or it'll catch it itself
 
-                    try
-                    {
+                    var mongoIngredientSearchLogic = DefinitionBuilder<IMongoIngredient>
+                        .MakeMongoEqualitySearch(ingredientDoc => ingredientDoc.NamedEntity, ingredient.NamedEntity, "ingredientId");
+                    
+                    var ingredientFilter = mongoIngredientSearchLogic.Filter;
+                    
+                    var updateLogic = Builders<IMongoIngredient>.Update.SetOnInsert(ingredientDoc => ingredientDoc.RecipeId, ingredient.RecipeId)
+                        .Set(ingredientDoc => ingredientDoc.NamedEntity, ingredient.NamedEntity);
+                        
+                    
+                    var updateResult = await ingredientCollection.UpdateOneAsync(ingredientFilter, updateLogic, new UpdateOptions() { IsUpsert = true });
 
-                        // insert ingredient into collection
-                        await ingredientCollection.InsertOneAsync(ingredient);
+                    if (updateResult.UpsertedId is not null)
+                    {
 
                         // increase the number of ingredients by 1
                         ingredientCount++;
 
                     }
-                    catch (Exception e) when (e is MongoWriteException mongoWriteException)
-                    // catch when the exception is an expected MongoWriteException
+                    else if (updateResult.MatchedCount > 0)
                     {
-                        // if it's the expected duplicate error, add to the count and move on
-                        if (mongoWriteException.WriteError.Code == 11000)
-                        {
-                            duplicateCount++;
-                        }
-                        else
-                        // otherwise throw back the original error
-                        {
-                            throw;
-                        }
+
+                        duplicateCount++;
 
                     }
+
+                    //try
+                    //{
+
+                    //    // insert ingredient into collection
+                    //    await ingredientCollection.InsertOneAsync(ingredient);                        
+
+                    //}
+                    //catch (Exception e) when (e is MongoWriteException mongoWriteException)
+                    //// catch when the exception is an expected MongoWriteException
+                    //{
+                    //    // if it's the expected duplicate error, add to the count and move on
+                    //    if (mongoWriteException.WriteError.Code == 11000)
+                    //    {
+
+                    //    }
+                    //    else
+                    //    // otherwise throw back the original error
+                    //    {
+                    //        throw;
+                    //    }
+
+                    //}
                 }
 
                 // increase the count of recipes processed
@@ -153,31 +172,36 @@ namespace RecipeLibrary.MongoDB.Extensions
 
             // while it is true that the cursor is not empty, run
             // can also be read as: while (not cursorEmpty) evaluates as true, run
-            
+
             Console.WriteLine("Checking recipes for ingredients...");
             while (!cursorEmpty)
             {
                 // get the current documents in the cursor and place it in am IEnumeral of type MongoRecipe
                 IEnumerable<IMongoRecipe> recipes = cursor.Current;
 
-                // add ingredients to a list from the list of recipes
-                // second batch goes in with ingredientCount at 5
                 (int newRecipeCount, int newIngredientCount, int newDuplicateCount) = await recipes.AddIngredientsFromRecipes(recipeCount, ingredientCount, duplicateCount, ingredientCollection);
 
-                // recipeCount is always the number processed this round
-                // recipesProcessedCount accumulates by adding recipeCount
                 recipeCount = newRecipeCount;
 
                 ingredientCount = newIngredientCount;
 
                 duplicateCount = newDuplicateCount;
 
-                // move to next batch and check if there is more
-                cursorEmpty = !await cursor.MoveNextAsync();
-
+                Console.WriteLine("\r\n");
                 Console.WriteLine($"{recipeCount} recipes processed thus far...");
                 Console.WriteLine($"{ingredientCount} ingredients added thus far...");
                 Console.WriteLine($"{duplicateCount} duplicates not added so far...");
+
+                try
+                {
+                    // move to next batch and check if there is more
+                    cursorEmpty = !await cursor.MoveNextAsync();
+                }
+                catch (MongoCursorNotFoundException e)
+                {
+                    string message = $"Cursor timed out after {recipeCount} recipes with the following error: {e.Message}";
+                    throw new MongoRecipeCursorGoneException(message, recipeCount, e);
+                }
 
             }
 

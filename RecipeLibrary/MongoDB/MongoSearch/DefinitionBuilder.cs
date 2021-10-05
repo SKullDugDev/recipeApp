@@ -1,40 +1,23 @@
 ﻿using MongoDB.Driver;
 using RecipeLibrary.MongoDB.Recipes;
+using System;
+using System.Linq.Expressions;
 
 namespace RecipeLibrary.MongoDB.MongoSearch
 {
-    public class DefinitionBuilder
+    public class DefinitionBuilder<TDocument>
     {
-        public FilterDefinition<IMongoRecipe> Filter { get; set; }
-        public SortDefinition<IMongoRecipe> Sort { get; set; }
-        public FindOptions Options { get; set; }
-        public static DefinitionBuilder GetMongoSearchLogic()
+        public FilterDefinition<TDocument> Filter { get; set; }
+        public SortDefinition<TDocument> Sort { get; set; }
+        public static DefinitionBuilder<TDocument> MakeMongoEqualitySearch(Expression<Func<TDocument, Object>> field, Object value, string sort)
         {
-            // implement a filter definition builder for the MongoRecipe entity class 
-            var filterBuilder = Builders<IMongoRecipe>.Filter;
-
-            // implement a sort definition builder for the MongoRecipe entity class
-            var sortBuilder = Builders<IMongoRecipe>.Sort;
-
-            var optionBuilder = new FindOptions()
-            {
-                //BatchSize = 501,
-                NoCursorTimeout = true
-            };
-
-            // initiate a new instance of the MongoRecipe defintion builder class
-            var mongoSearchLogic = new DefinitionBuilder
+                
+            var mongoSearchLogic = new DefinitionBuilder<TDocument>
             {
 
-                // use a filter so we can sort through all the documents with the Gathered source
-                // store it in the Filter property of the MongoRecipe definition builder
-                Filter = filterBuilder.Eq(MongoRecipe => MongoRecipe.Source, "Gathered"),
+                Filter = Builders<TDocument>.Filter.Eq(field, value),
 
-                // create a sort definiton logic to sort by RecipeID in ascending order
-                // store it in the Sort property of the MongoRecipe defintion builder
-                Sort = sortBuilder.Ascending("RecipeID"),
-
-                Options = optionBuilder
+                Sort = Builders<TDocument>.Sort.Ascending(sort),
 
             };
 
